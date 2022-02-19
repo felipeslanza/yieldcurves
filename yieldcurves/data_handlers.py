@@ -5,6 +5,8 @@ from typing import Optional
 import pandas as pd
 import investpy
 
+from .utils import search_country
+
 
 __all__ = ("get_yield_curve",)
 
@@ -31,9 +33,9 @@ def get_yield_curve(
     ----------
     country_name : str
     from_date : str
-        start date in DD/MM/YYYY format
+        start date in "DD/MM/YYYY" format
     to_date : str
-        end date in DD/MM/YYYY format
+        end date in "DD/MM/YYYY" format
     """
     tickers = search_country(country_name)
 
