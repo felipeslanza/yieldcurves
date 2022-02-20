@@ -1,14 +1,16 @@
+import plotly.express as px
 import streamlit as st
 
+from . import shared
 from .sidebar import render_sidebar
-
-
-__all__ = ("run",)
 
 
 def run():
     st.set_page_config(layout="wide")
 
-    res = render_sidebar()
-    if res is not None:
-        target_country, bonds_df = res
+    render_sidebar(shared.target_country)
+
+    if shared.bonds_active:
+        df = shared.bonds_df[shared.bonds_active]
+        fig = px.scatter(df.iloc[-1])
+        st.plotly_chart(fig)
