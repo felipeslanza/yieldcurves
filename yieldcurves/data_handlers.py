@@ -1,3 +1,10 @@
+"""
+yieldcurves.data_handlers
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This module defines functions to get yield data.
+"""
+
 import logging
 from datetime import datetime
 from typing import Optional
@@ -8,7 +15,10 @@ import investpy
 from .utils import search_country
 
 
-__all__ = ("get_yield_curve",)
+__all__ = (
+    "get_recent_yield",
+    "get_ohlc_yield_history",
+)
 
 
 logger = logging.getLogger(__name__)
@@ -20,12 +30,41 @@ TODAY = datetime.today().date()
 TODAY_STR = TODAY.strftime("%d/%m/%Y")
 
 
-def get_yield_curve(
+def get_recent_yield(
+    country_name: str,
+    field: str = "Close",
+    n_rows: int = 22,
+) -> Optional[pd.DataFrame]:
+    """Returns the most recent yield data for `country_name`
+
+    ...
+
+    Parameters
+    ----------
+    country_name : str
+    field : str
+        target field in OHLC
+    n_rows : int
+        # of rows to be returned
+    """
+    tickers = search_country(country_name)
+
+    if tickers:
+        data = {}
+        for ticker in tickers:
+            df = investpy.get_bond_recent_data(ticker)
+            data[ticker] = df[field].rename(ticker)
+
+        if data:
+            return pd.DataFrame(data).tail(n_rows)
+
+
+def get_ohlc_yield_history(
     country_name: str,
     from_date: str = "01/01/1990",
     to_date: str = TODAY_STR,
 ) -> Optional[pd.DataFrame]:
-    """Returns historical yield data for all bonds issued by `country_name`
+    """Returns historical OHLC yield data for all bonds issued by `country_name`
 
     ...
 
