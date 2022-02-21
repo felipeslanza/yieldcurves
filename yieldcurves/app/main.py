@@ -1,9 +1,10 @@
+import numpy as np
 import plotly.express as px
 import streamlit as st
 
 from . import shared
 from .sidebar import render_sidebar
-from yieldcurves.utils import sort_tickers
+from yieldcurves.utils import get_tickvals, sort_tickers
 
 
 def run():
@@ -19,8 +20,21 @@ def run():
     # Content
     if shared.bonds_active:
         active_tickers = sort_tickers(shared.bonds_active)
-        df = shared.bonds_df[active_tickers]
-        data = df.tail(5).T
+        tickvals = get_tickvals(active_tickers)
 
-        fig = px.line(data, width=1300, height=700)
+        data = shared.bonds_df[active_tickers]
+        # ++++++++++++++++++++++++++++++++++++
+        data = data.tail(3).T  # (!) Temporary
+        # ++++++++++++++++++++++++++++++++++++
+        data.index = tickvals
+        data = data.reindex(np.arange(1, tickvals[-1] + 1))  # Reindex to longest mty
+
+        fig = px.scatter(data, width=1300, height=700)
+        fig.update_layout(
+            xaxis=dict(
+                tickmode="array",
+                tickvals=tickvals,
+                ticktext=active_tickers,
+            )
+        )
         st.plotly_chart(fig)
