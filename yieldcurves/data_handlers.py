@@ -12,6 +12,7 @@ from typing import Optional
 import pandas as pd
 import investpy
 
+from . import settings
 from .utils import search_country
 
 
@@ -43,20 +44,20 @@ def get_recent_yield(
     ----------
     country_name : str
     field : str
-        target field in OHLC
+        target field in OHLC, one of {Close, Open, High Low}
     n_rows : int
         # of rows to be returned
     """
     tickers = search_country(country_name)
 
-    if tickers:
-        data = {}
-        for ticker in tickers:
-            df = investpy.get_bond_recent_data(ticker)
-            data[ticker] = df[field].rename(ticker)
+    data = {}
+    for ticker in tickers:
+        df = investpy.get_bond_recent_data(ticker)
+        data[ticker] = df[field].rename(ticker)
 
-        if data:
-            return pd.DataFrame(data).tail(n_rows)
+    df = pd.DataFrame(data)
+
+    return df.tail(n_rows).dropna(thresh=settings.MIN_VALID_CURVE_THRESHOLD)
 
 
 def get_ohlc_yield_history(

@@ -1,3 +1,4 @@
+import pandas as pd
 import streamlit as st
 
 from yieldcurves.data_handlers import get_ohlc_yield_history
@@ -14,8 +15,12 @@ def render_sidebar(target_country: str):
 
     # Trigger `shared` update
     if target_country != shared.target_country:
-        df = get_ohlc_yield_history(target_country)
-        df = df.xs("Close", 1, 1)
+        # df = get_ohlc_yield_history(target_country)
+        # df = df.xs("Close", 1, 1)
+
+        #### TEMP ####
+        df = pd.read_pickle("/home/fsl/code/yieldcurves/temp.pkl")
+        #### TEMP ####
 
         # Updated shared variables
         shared.target_country = target_country
