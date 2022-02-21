@@ -3,6 +3,7 @@ import streamlit as st
 
 from . import shared
 from .sidebar import render_sidebar
+from yieldcurves.utils import sort_tickers
 
 
 def run():
@@ -17,9 +18,8 @@ def run():
 
     # Content
     if shared.bonds_active:
-        df = shared.bonds_df[shared.bonds_active]
-
-        # Arbitrary
+        active_tickers = sort_tickers(shared.bonds_active)
+        df = shared.bonds_df[active_tickers]
         data = df.tail(5).T
 
         fig = px.line(data, width=1300, height=700)

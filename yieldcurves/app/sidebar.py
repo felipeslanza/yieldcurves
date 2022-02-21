@@ -2,6 +2,7 @@ import pandas as pd
 import streamlit as st
 
 from yieldcurves.data_handlers import get_ohlc_yield_history
+from yieldcurves.utils import sort_tickers
 from . import shared
 
 
@@ -25,12 +26,12 @@ def render_sidebar(target_country: str):
         # Updated shared variables
         shared.target_country = target_country
         shared.bonds_df = df
-        shared.bonds_tickers = sorted(df)
-        # shared.bonds_tickers = sorted(df.columns.get_level_values(0).unique())
+        shared.bonds_tickers = sort_tickers(list(df))
 
     st.sidebar.subheader("Select issuances")
 
     for term in shared.bonds_tickers:
+        print("---> ", term, shared.bonds_active)
         val = st.sidebar.checkbox(term, value=True)
         if val:
             shared.bonds_active.add(term)

@@ -1,20 +1,20 @@
 import logging
 import re
 from functools import lru_cache
-from typing import List, Optional
+from typing import List
 
 import investpy
 import numpy as np
 
 
-__all__ = ("search_bonds", "sort_tickers")
+__all__ = ("search_country", "sort_tickers")
 
 
 logger = logging.getLogger(__name__)
 
 
 @lru_cache(maxsize=32)
-def search_country(query: str) -> Optional[List[str]]:
+def search_country(query: str) -> List[str]:
     """Search available bonds for a given country
 
     ...
@@ -24,6 +24,7 @@ def search_country(query: str) -> Optional[List[str]]:
     query : str
         full name of target country (e.g. "united kingdom", *NOT* "uk")
     """
+    tickers = []
     try:
         res = investpy.search_bonds("full_name", query)
     except RuntimeError:
@@ -32,7 +33,9 @@ def search_country(query: str) -> Optional[List[str]]:
         if res.country.unique().size != 1:
             logger.error(f"Ambiguous query [{query}].")
         else:
-            return res.name.sort_values().tolist()
+            tickers = res.name.sort_values().tolist()
+
+    return tickers
 
 
 def sort_tickers(tickers: List[str]) -> List[str]:
@@ -41,7 +44,7 @@ def sort_tickers(tickers: List[str]) -> List[str]:
     def _custom_sorter(key: str) -> str:
         """Add higher prefix to years and sort as number (not alphabetically)"""
         number, period = key[:-1], key[-1]
-        suffix = 10 if "Y" in period else 1
+        suffix = {"Y": 100, "M": 1}[period]
 
         return int(f"{suffix}{number}")
 
@@ -49,4 +52,4 @@ def sort_tickers(tickers: List[str]) -> List[str]:
     sorted_terms = sorted(terms, key=_custom_sorter)
     idx = [terms.index(i) for i in sorted_terms]
 
-    return np.array(tickers)[idx].tolist()
+    return np.array(list(tickers))[idx].tolist()
