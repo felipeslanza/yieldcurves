@@ -10,11 +10,13 @@ import os
 
 # General
 # ----
+DATE_FORMAT = "%Y-%m-%d"
+
 LOGGING_LEVEL = os.environ.get("LOGGING_LEVEL", "INFO")
 LOGGING_FORMAT = "%(levelname)s - yieldcurves.%(module)s.%(funcName)s - %(message)s"
 
 
-# Investing Data
+# Investing data
 # ----
 # Mininum number of valid yield points in a given date for the curve to be
 # considered valid, i.e. row is not dropped.

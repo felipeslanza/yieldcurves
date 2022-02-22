@@ -1,3 +1,10 @@
+"""
+yieldcurves.app.loaders
+~~~~~~~~~~~~~~~~~~~~~~~
+
+This module defines data loaders to be used by the app.
+"""
+
 import pandas as pd
 import streamlit as st
 
