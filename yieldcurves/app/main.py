@@ -5,6 +5,8 @@ yieldcurves.app.main
 This module controls the app.
 """
 
+from contextlib import suppress
+
 import streamlit as st
 
 from yieldcurves import settings
@@ -27,17 +29,15 @@ def run():
     load_country(target_country)
 
     # Layout (post-data)
-    cont0.subheader(f"Bond yields for [{shared.target_country.title()}]")
+    cont0.subheader(f"Bond yields: *{shared.target_country.title()}*")
     st.sidebar.subheader("Select terms")
     for term in shared.bonds_tickers:
         val = st.sidebar.checkbox(term, value=True)
         if val:
             shared.bonds_active.add(term)
         else:
-            shared.bonds_active.remove(term)
-
-    #### TEMP ####
-    #### TEMP ####
+            with suppress(KeyError):
+                shared.bonds_active.remove(term)
 
     # Content
     plot_yield_curve(

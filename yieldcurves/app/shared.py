@@ -18,3 +18,5 @@ bonds_terms: List[str] = []
 bonds_active: Set[str] = set()
 
 selected_dates: List[str] = []
+
+interpolation_method: str = "cubic"

@@ -11,6 +11,7 @@ from typing import List, Union
 
 import numpy as np
 import plotly.graph_objects as go
+import plotly.express as px
 import streamlit as st
 
 from yieldcurves.utils import get_terms, get_tickvals, sort_by_term
@@ -23,13 +24,18 @@ __all__ = ("plot_yield_curve",)
 
 logger = logging.getLogger(__name__)
 
+# Globals
+# ----
+COLORS = px.colors.qualitative.Plotly
+
 
 def plot_yield_curve(
     active_bonds: List[str],
     active_dates: List[Union[str, datetime]],
 ):
     sorted_tickers = sort_by_term(active_bonds)
-    tickvals = get_tickvals(shared.bonds_terms)
+    terms = get_terms(sorted_tickers)
+    tickvals = get_tickvals(terms)
 
     data = shared.bonds_df.loc[active_dates, sorted_tickers].T
     data.index = tickvals
@@ -43,7 +49,7 @@ def plot_yield_curve(
                 title="Terms",
                 tickmode="array",
                 tickvals=tickvals,
-                ticktext=get_terms(sorted_tickers),
+                ticktext=terms,
                 range=[0, (tickvals[-1] + 12 if "Y" in shared.bonds_terms[-1] else 1)],
                 showgrid=False,
                 zeroline=False,
@@ -55,13 +61,28 @@ def plot_yield_curve(
         )
     )
 
-    for (date, series) in data.iteritems():
+    for i, (date, series) in enumerate(data.iteritems()):
+        color = COLORS[i]
+
+        # Add valid points
         fig.add_trace(
             go.Scatter(
                 x=series.index,
                 y=series,
                 mode="lines+markers",
                 name=date.strftime(settings.DATE_FORMAT),
+                marker=dict(color=color),
+            )
+        )
+
+        # Add interpolated curve
+        curve = series.interpolate(method=shared.interpolation_method)
+        fig.add_trace(
+            go.Scatter(
+                x=curve.index,
+                y=curve,
+                line=dict(width=0.75, color=color),
+                showlegend=False,
             )
         )
 
