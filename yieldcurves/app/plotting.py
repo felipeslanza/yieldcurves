@@ -16,7 +16,6 @@ import streamlit as st
 from yieldcurves.utils import get_terms, get_tickvals, sort_by_term
 from yieldcurves import settings
 from . import shared
-from .loaders import load_country
 
 
 __all__ = ("plot_yield_curve",)
@@ -45,8 +44,14 @@ def plot_yield_curve(
                 tickmode="array",
                 tickvals=tickvals,
                 ticktext=get_terms(sorted_tickers),
+                range=[0, (tickvals[-1] + 12 if "Y" in shared.bonds_terms[-1] else 1)],
+                showgrid=False,
+                zeroline=False,
             ),
-            yaxis=dict(title="Yield %"),
+            yaxis=dict(
+                title="Yield %",
+                showgrid=False,
+            ),
         )
     )
 
