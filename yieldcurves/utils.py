@@ -5,34 +5,50 @@ from typing import List
 
 import investpy
 import numpy as np
+import pandas as pd
 
 
-__all__ = ("get_tickvals", "search_country", "sort_tickers")
+__all__ = (
+    "get_terms",
+    "get_tickvals",
+    "search_country",
+    "sort_by_term",
+)
 
 
 logger = logging.getLogger(__name__)
 
 
-def get_tickvals(tickers: List[str]) -> List[int]:
-    """Map tickers/terms to an integer (for setting x-axis when plotting)
+def get_terms(tickers: List[str]) -> List[str]:
+    """Map tickers to bond terms, e.g. Brazil 5Y -> 5Y"""
+    return re.findall(r"\d+[MY]", "|".join(tickers))
+
+
+def get_tickvals(terms: List[str]) -> List[int]:
+    """Map terms to an integer (for setting x-axis when plotting)
 
     ...
 
     Parameters
     ----------
-    tickers : List[str]
+    terms : List[str]
     """
-    vals = [None] * len(tickers)
-    for i, ticker in enumerate(tickers):
-        period = ticker.split(" ")[1]
-        if "M" in period:
-            val = int(period[:-1])
-        elif "Y" in period:
-            val = int(period[:-1]) * 12
+    if len(set(terms)) != len(terms):
+        raise ValueError("Terms must be unique")
+
+    vals = [None] * len(terms)
+    for i, term in enumerate(terms):
+        if "M" in term:
+            val = int(term[:-1])
+        elif "Y" in term:
+            val = int(term[:-1]) * 12
         else:
-            raise ValueError(f"Unrecognized period [{period}]")
+            raise ValueError(f"Unrecognized period [{term}]")
         vals[i] = val
 
+    # If resulting tickvals are not monotonic, input was likely not sorted
+    if not pd.Series(vals).is_monotonic:
+        return get_tickvals(sort_by_term(terms))
     return vals
 
 
@@ -61,7 +77,7 @@ def search_country(query: str) -> List[str]:
     return tickers
 
 
-def sort_tickers(tickers: List[str]) -> List[str]:
+def sort_by_term(tickers: List[str]) -> List[str]:
     """Sort bond tickers by term
 
     ...
@@ -79,7 +95,7 @@ def sort_tickers(tickers: List[str]) -> List[str]:
 
         return int(f"{suffix}{number}")
 
-    terms = re.findall(r"\d+[MY]", "|".join(tickers))
+    terms = get_terms(tickers)
     sorted_terms = sorted(terms, key=_custom_sorter)
     idx = [terms.index(i) for i in sorted_terms]
 

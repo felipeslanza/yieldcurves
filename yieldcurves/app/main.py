@@ -4,7 +4,7 @@ import streamlit as st
 
 from . import shared
 from .sidebar import render_sidebar
-from yieldcurves.utils import get_tickvals, sort_tickers
+from yieldcurves.utils import get_tickvals, sort_by_term
 
 
 def run():
@@ -19,8 +19,8 @@ def run():
 
     # Content
     if shared.bonds_active:
-        active_tickers = sort_tickers(shared.bonds_active)
-        tickvals = get_tickvals(active_tickers)
+        active_tickers = sort_by_term(shared.bonds_active)
+        tickvals = get_tickvals(shared.bonds_terms)
 
         data = shared.bonds_df[active_tickers]
         # ++++++++++++++++++++++++++++++++++++
