@@ -2,7 +2,7 @@ import pandas as pd
 import streamlit as st
 
 from yieldcurves.data_handlers import get_ohlc_yield_history
-from yieldcurves.utils import sort_by_term
+from yieldcurves.utils import get_terms, sort_by_term
 from . import shared
 
 

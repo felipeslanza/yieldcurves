@@ -1,14 +1,13 @@
-import numpy as np
-import plotly.express as px
 import streamlit as st
 
+from yieldcurves import settings
 from . import shared
 from .sidebar import render_sidebar
-from yieldcurves.utils import get_tickvals, sort_by_term
+from .plotting import plot_yield_curve
 
 
 def run():
-    st.set_page_config(layout="wide")
+    st.set_page_config(**settings.ST_PAGE_CONFIG)
 
     # Layout
     cont0 = st.container()
@@ -18,23 +17,4 @@ def run():
     cont0.subheader(f"Bond yields for {shared.target_country.title()}")
 
     # Content
-    if shared.bonds_active:
-        active_tickers = sort_by_term(shared.bonds_active)
-        tickvals = get_tickvals(shared.bonds_terms)
-
-        data = shared.bonds_df[active_tickers]
-        # ++++++++++++++++++++++++++++++++++++
-        data = data.tail(3).T  # (!) Temporary
-        # ++++++++++++++++++++++++++++++++++++
-        data.index = tickvals
-        data = data.reindex(np.arange(1, tickvals[-1] + 1))  # Reindex to longest mty
-
-        fig = px.scatter(data, width=1300, height=700)
-        fig.update_layout(
-            xaxis=dict(
-                tickmode="array",
-                tickvals=tickvals,
-                ticktext=active_tickers,
-            )
-        )
-        st.plotly_chart(fig)
+    plot_yield_curve()
