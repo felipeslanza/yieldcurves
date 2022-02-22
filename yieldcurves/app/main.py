@@ -14,6 +14,7 @@ from .plotting import plot_yield_curve
 
 
 def run():
+    # Config
     st.legacy_caching.caching.clear_cache()
     st.set_page_config(**settings.ST_PAGE_CONFIG)
 
@@ -21,9 +22,9 @@ def run():
     st.sidebar.header("Settings")
     cont0 = st.container()
 
-    # Setup & get data
-    target_country = st.sidebar.text_input("Target country (full name)", value="Brazil")
-    load_country(target_country.lower())
+    # Setup & load data
+    target_country = st.sidebar.text_input("Country (full name)", value="Brazil").lower()
+    load_country(target_country)
 
     # Layout (post-data)
     cont0.subheader(f"Bond yields for [{shared.target_country.title()}]")
@@ -35,5 +36,14 @@ def run():
         else:
             shared.bonds_active.remove(term)
 
+    #### TEMP ####
+    #### TEMP ####
+
     # Content
-    plot_yield_curve(shared.bonds_active)
+    plot_yield_curve(
+        active_bonds=shared.bonds_active,
+        # active_dates=shared.selected_dates,
+        # ++++++++++++++++++++++++++++++++++++++++++++++
+        active_dates=["2022-2-17", "2022-1-27"],  # TEMP
+        # ++++++++++++++++++++++++++++++++++++++++++++++
+    )
