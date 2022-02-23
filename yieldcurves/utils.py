@@ -11,6 +11,7 @@ import pandas as pd
 __all__ = (
     "get_terms",
     "get_tickvals",
+    "interpolate_curve",
     "search_country",
     "sort_by_term",
 )
@@ -50,6 +51,22 @@ def get_tickvals(terms: List[str]) -> List[int]:
     if not pd.Series(vals).is_monotonic:
         return get_tickvals(sort_by_term(terms))
     return vals
+
+
+def interpolate_curve(data: pd.Series, method: str) -> pd.Series:
+    """Wrapper to interpolate a curve by gradually stepping "down" in method"""
+    curve = None
+    try:
+        curve = data.interpolate(method=method)
+    except ValueError:
+        logger.error(f"Not enough data for method `{method}`. Using `quadratic`.")
+        try:
+            curve = data.interpolate(method="quadratic")
+        except ValueError:
+            logger.error(f"Not enough data for method `quadratic`. Using `linear`.")
+            curve = data.interpolate(method="linear")
+
+    return curve
 
 
 def _is_valid_ticker(ticker: str) -> bool:

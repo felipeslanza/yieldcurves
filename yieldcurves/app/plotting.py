@@ -14,7 +14,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 from streamlit.delta_generator import DeltaGenerator
 
-from yieldcurves.utils import get_terms, get_tickvals, sort_by_term
+from yieldcurves.utils import get_terms, get_tickvals, interpolate_curve, sort_by_term
 from yieldcurves import settings
 from . import shared
 
@@ -95,21 +95,16 @@ def plot_yield_curve(
         )
 
         # Add interpolated curve
-        try:
-            method = shared.interpolation_method
-            curve = series.interpolate(method=method)
-        except ValueError:
-            logger.error(f"Not enough data for method {method}. Using `quadratic`.")
-            curve = series.interpolate(method="quadratic")
-
-        fig.add_trace(
-            go.Scatter(
-                x=curve.index,
-                y=curve,
-                line=dict(width=0.75, color=color),
-                showlegend=False,
+        curve = interpolate_curve(series, method=shared.interpolation_method)
+        if curve is not None:
+            fig.add_trace(
+                go.Scatter(
+                    x=curve.index,
+                    y=curve,
+                    line=dict(width=0.75, color=color),
+                    showlegend=False,
+                )
             )
-        )
 
     container.subheader("Yield curve")
     container.plotly_chart(fig, use_container_width=True)

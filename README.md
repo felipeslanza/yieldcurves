@@ -1,7 +1,9 @@
 yieldcurves
 ====
 
-Interface to search and analyze sovereign bond yields
+Interface to search and analyze sovereign bond yields.
+
+![](assets/demo.gif)
 
 
 Setup
@@ -29,5 +31,3 @@ Launch the `streamlit`-based app:
 ```shell
 streamlit run yieldcurves/__main__.py
 ```
-
-![](assets/demo.gif)
