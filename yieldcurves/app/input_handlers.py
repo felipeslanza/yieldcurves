@@ -5,7 +5,6 @@ import pandas as pd
 from streamlit.delta_generator import DeltaGenerator
 
 from yieldcurves import settings
-from . import shared
 
 
 __all__ = (
@@ -37,7 +36,7 @@ def render_dates_selector(container: DeltaGenerator) -> List[str]:
     d1 = container.text_input("#2: ", value=d1_val)
     d2 = container.text_input("#3: ", value=d2_val)
 
-    return d0, d1, d2
+    return [d0, d1, d2]
 
 
 def render_interpolation_selector(container: DeltaGenerator):
