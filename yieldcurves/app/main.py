@@ -5,13 +5,11 @@ yieldcurves.app.main
 This module controls the app.
 """
 
-from contextlib import suppress
-
 import streamlit as st
 
 from yieldcurves import settings
 from . import shared
-from .loaders import load_country
+from .loaders import load_active_bonds, load_country
 from .plotting import plot_yield_curve
 
 
@@ -28,16 +26,15 @@ def run():
     target_country = st.sidebar.text_input("Country (full name)", value="Brazil").lower()
     load_country(target_country)
 
+    st.sidebar.subheader("Active terms")
+    load_active_bonds()
+
+    shared.interpolation_method = st.sidebar.radio(
+        "Interpolation method", options=["cubic", "quadratic", "linear"], index=0
+    )
+
     # Layout (post-data)
     cont0.subheader(f"Bond yields: *{shared.target_country.title()}*")
-    st.sidebar.subheader("Select terms")
-    for term in shared.bonds_tickers:
-        val = st.sidebar.checkbox(term, value=True)
-        if val:
-            shared.bonds_active.add(term)
-        else:
-            with suppress(KeyError):
-                shared.bonds_active.remove(term)
 
     # Content
     plot_yield_curve(

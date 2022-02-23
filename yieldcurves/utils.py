@@ -34,7 +34,7 @@ def get_tickvals(terms: List[str]) -> List[int]:
     terms : List[str]
     """
     if len(set(terms)) != len(terms):
-        raise ValueError("Terms must be unique")
+        raise ValueError("Bond terms must be unique")
 
     vals = [None] * len(terms)
     for i, term in enumerate(terms):

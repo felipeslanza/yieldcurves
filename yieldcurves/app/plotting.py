@@ -40,6 +40,7 @@ def plot_yield_curve(
     data = shared.bonds_df.loc[active_dates, sorted_tickers].T
     data.index = tickvals
     data = data.reindex(np.arange(1, tickvals[-1] + 1))  # Reindex to longest mty
+    max_tick = tickvals[-1] + 12 if "Y" in shared.bonds_terms[-1] else 1
 
     fig = go.Figure(
         layout=dict(
@@ -50,7 +51,7 @@ def plot_yield_curve(
                 tickmode="array",
                 tickvals=tickvals,
                 ticktext=terms,
-                range=[0, (tickvals[-1] + 12 if "Y" in shared.bonds_terms[-1] else 1)],
+                range=[0, max_tick],
                 showgrid=False,
                 zeroline=False,
             ),
@@ -76,7 +77,13 @@ def plot_yield_curve(
         )
 
         # Add interpolated curve
-        curve = series.interpolate(method=shared.interpolation_method)
+        try:
+            method = shared.interpolation_method
+            curve = series.interpolate(method=method)
+        except ValueError as e:
+            logger.error("Not enough data for method {method}. Using `quadratic` instead")
+            curve = series.interpolate(method="quadratic")
+
         fig.add_trace(
             go.Scatter(
                 x=curve.index,
