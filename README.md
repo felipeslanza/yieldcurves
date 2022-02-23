@@ -29,3 +29,5 @@ Launch the `streamlit`-based app:
 ```shell
 streamlit run yieldcurves/__main__.py
 ```
+
+![](assets/demo.gif)

@@ -67,6 +67,7 @@ def plot_yield_curve(
             yaxis=dict(
                 title="Yield %",
                 showgrid=False,
+                zeroline=False,
             ),
             legend=dict(
                 yanchor="bottom",
