@@ -25,9 +25,7 @@ def load_country(target_country: str):
 
     df = get_ohlc_yield_history(target_country)
     df = df.xs("Close", 1, 1)
-    #### TEMP ####
     # df = pd.read_pickle(f"/home/fsl/code/yieldcurves/{target_country}.pkl")
-    #### TEMP ####
 
     # Updated shared variables
     if target_country != shared.target_country:
@@ -35,11 +33,18 @@ def load_country(target_country: str):
         shared.bonds_df = df
         shared.bonds_tickers = sort_by_term(list(df))
         shared.bonds_terms = get_terms(shared.bonds_tickers)
-        shared.bonds_active = set()  # Must re-set active state
+        shared.bonds_active = set()  # Must reset active state
 
 
 def load_active_bonds():
+    monthly_count = 0
     for term in shared.bonds_tickers:
+        if "M" in term:
+            monthly_count += 1
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        # TODO: unselect vertices when multiple monthly issuances are available
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
         val = st.sidebar.checkbox(term, value=True)
         if val:
             shared.bonds_active.add(term)

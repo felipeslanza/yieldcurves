@@ -38,6 +38,10 @@ def plot_yield_curve(
     terms = get_terms(sorted_tickers)
     tickvals = get_tickvals(terms)
 
+    # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # TODO: modify `active_dates` to nearest value if not found
+    # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
     data = shared.bonds_df.loc[active_dates, sorted_tickers].T
     data.index = tickvals
     data = data.reindex(np.arange(1, tickvals[-1] + 1))  # Reindex to longest mty
@@ -62,7 +66,7 @@ def plot_yield_curve(
                 showgrid=False,
             ),
             legend=dict(
-                yanchor="top",
+                yanchor="bottom",
                 y=0.97,
                 xanchor="right",
                 x=0.98,
