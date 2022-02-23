@@ -9,38 +9,38 @@ import streamlit as st
 
 from yieldcurves import settings
 from . import shared
+from .input_handlers import (
+    render_country_selector,
+    render_dates_selector,
+    render_interpolation_selector,
+)
 from .loaders import load_active_bonds, load_country
 from .plotting import plot_yield_curve
 
 
 def run():
     # Config
-    st.legacy_caching.caching.clear_cache()
     st.set_page_config(**settings.ST_PAGE_CONFIG)
 
     # Layout (pre-data)
     st.sidebar.header("Settings")
     cont0 = st.container()
+    target_country = render_country_selector(st.sidebar)
+    st.sidebar.subheader("Active terms")
 
     # Setup & load data
-    target_country = st.sidebar.text_input("Country (full name)", value="Brazil").lower()
-    load_country(target_country)
-
-    st.sidebar.subheader("Active terms")
+    load_country(target_country)  # cached
     load_active_bonds()
-
-    shared.interpolation_method = st.sidebar.radio(
-        "Interpolation method", options=["cubic", "quadratic", "linear"], index=0
-    )
+    shared.interpolation_method = render_interpolation_selector(st.sidebar)
 
     # Layout (post-data)
-    cont0.subheader(f"Bond yields: *{shared.target_country.title()}*")
+    cont0.title(f"Bond yields: *{shared.target_country.title()}*")
+    left0, right0 = cont0.columns([0.8, 0.2])
+    selected_dates = render_dates_selector(right0)
 
     # Content
     plot_yield_curve(
         active_bonds=shared.bonds_active,
-        # active_dates=shared.selected_dates,
-        # ++++++++++++++++++++++++++++++++++++++++++++++
-        active_dates=["2022-2-17", "2022-1-27"],  # TEMP
-        # ++++++++++++++++++++++++++++++++++++++++++++++
+        active_dates=selected_dates,
+        container=left0,
     )

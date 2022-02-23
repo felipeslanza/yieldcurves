@@ -12,7 +12,7 @@ from typing import List, Union
 import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
-import streamlit as st
+from streamlit.delta_generator import DeltaGenerator
 
 from yieldcurves.utils import get_terms, get_tickvals, sort_by_term
 from yieldcurves import settings
@@ -32,6 +32,7 @@ COLORS = px.colors.qualitative.Plotly
 def plot_yield_curve(
     active_bonds: List[str],
     active_dates: List[Union[str, datetime]],
+    container: DeltaGenerator,
 ):
     sorted_tickers = sort_by_term(active_bonds)
     terms = get_terms(sorted_tickers)
@@ -44,6 +45,7 @@ def plot_yield_curve(
 
     fig = go.Figure(
         layout=dict(
+            margin=dict(l=10, r=40, t=25, b=15),
             height=700,
             width=1300,
             xaxis=dict(
@@ -58,6 +60,14 @@ def plot_yield_curve(
             yaxis=dict(
                 title="Yield %",
                 showgrid=False,
+            ),
+            legend=dict(
+                yanchor="top",
+                y=0.97,
+                xanchor="right",
+                x=0.98,
+                bordercolor="#d3d3d3",
+                borderwidth=1,
             ),
         )
     )
@@ -81,7 +91,7 @@ def plot_yield_curve(
             method = shared.interpolation_method
             curve = series.interpolate(method=method)
         except ValueError as e:
-            logger.error("Not enough data for method {method}. Using `quadratic` instead")
+            logger.error(f"Not enough data for method {method}. Using `quadratic`.")
             curve = series.interpolate(method="quadratic")
 
         fig.add_trace(
@@ -93,4 +103,5 @@ def plot_yield_curve(
             )
         )
 
-    st.plotly_chart(fig)
+    container.subheader("Yield curve")
+    container.plotly_chart(fig, use_container_width=True)

@@ -20,10 +20,13 @@ __all__ = ("load_country",)
 
 @st.cache
 def load_country(target_country: str):
-    #  df = get_ohlc_yield_history(target_country)
-    #  df = df.xs("Close", 1, 1)
+    if not target_country:
+        return
+
+    df = get_ohlc_yield_history(target_country)
+    df = df.xs("Close", 1, 1)
     #### TEMP ####
-    df = pd.read_pickle(f"/home/fsl/code/yieldcurves/{target_country}.pkl")
+    # df = pd.read_pickle(f"/home/fsl/code/yieldcurves/{target_country}.pkl")
     #### TEMP ####
 
     # Updated shared variables
