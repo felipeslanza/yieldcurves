@@ -52,6 +52,15 @@ def get_tickvals(terms: List[str]) -> List[int]:
     return vals
 
 
+def _is_valid_ticker(ticker: str) -> bool:
+    """Helper to drop tickers/terms with unwanted patterns"""
+    restricted = ["Overnight", "W"]
+    for el in restricted:
+        if el in ticker:
+            return False
+    return True
+
+
 @lru_cache(maxsize=32)
 def search_country(query: str) -> List[str]:
     """Search available bonds for a given country
@@ -74,7 +83,7 @@ def search_country(query: str) -> List[str]:
         else:
             tickers = res.name.tolist()
 
-    return tickers
+    return filter(_is_valid_ticker, tickers)
 
 
 def sort_by_term(tickers: List[str]) -> List[str]:
@@ -91,7 +100,7 @@ def sort_by_term(tickers: List[str]) -> List[str]:
     def _custom_sorter(key: str) -> str:
         """Add higher prefix to years and sort as number (not alphabetically)"""
         number, period = key[:-1], key[-1]
-        suffix = {"Y": 100, "M": 1}[period]
+        suffix = {"Y": 10000, "M": 100, "W": 1}[period]
 
         return int(f"{suffix}{number}")
 

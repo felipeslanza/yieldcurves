@@ -38,9 +38,11 @@ def plot_yield_curve(
     terms = get_terms(sorted_tickers)
     tickvals = get_tickvals(terms)
 
-    # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    # TODO: modify `active_dates` to nearest value if not found
-    # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    idx = shared.bonds_df.index
+    for i, date in enumerate(active_dates):
+        if date not in idx:
+            new_date = idx[idx.searchsorted(date)]
+            active_dates[i] = new_date
 
     data = shared.bonds_df.loc[active_dates, sorted_tickers].T
     data.index = tickvals
@@ -67,7 +69,7 @@ def plot_yield_curve(
             ),
             legend=dict(
                 yanchor="bottom",
-                y=0.97,
+                y=0.03,
                 xanchor="right",
                 x=0.98,
                 bordercolor="#d3d3d3",
@@ -94,7 +96,7 @@ def plot_yield_curve(
         try:
             method = shared.interpolation_method
             curve = series.interpolate(method=method)
-        except ValueError as e:
+        except ValueError:
             logger.error(f"Not enough data for method {method}. Using `quadratic`.")
             curve = series.interpolate(method="quadratic")
 
