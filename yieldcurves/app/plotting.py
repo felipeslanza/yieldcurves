@@ -42,7 +42,10 @@ def plot_yield_curve(
     for i, date in enumerate(active_dates):
         if date not in idx:
             logger.warning(f"{date} not found in index. Stepping to closest date.")
-            new_date = idx[idx.searchsorted(date)].strftime(settings.DATE_FORMAT)
+            try:
+                new_date = idx[idx.searchsorted(date)].strftime(settings.DATE_FORMAT)
+            except IndexError:
+                new_date = idx[-1].strftime(settings.DATE_FORMAT)
             active_dates[i] = new_date
 
     data = shared.bonds_df.loc[active_dates, sorted_tickers].T
