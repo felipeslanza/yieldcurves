@@ -7,6 +7,7 @@ This module defines functions to get yield data.
 
 import logging
 from datetime import datetime
+from time import sleep
 from typing import Optional
 
 import pandas as pd
@@ -52,7 +53,15 @@ def get_recent_yield(
 
     data = {}
     for ticker in tickers:
-        df = investpy.get_bond_recent_data(ticker)
+        tries = 0
+        while tries < settings.MAX_RETRIES_ON_CONNECTION_ERROR:
+            try:
+                df = investpy.get_bond_recent_data(ticker)
+                break
+            except ConnectionError as e:
+                logger.error(e)
+                time.sleep(10)
+            tries += 1
         data[ticker] = df[field].rename(ticker)
 
     df = pd.DataFrame(data)
@@ -83,12 +92,18 @@ def get_ohlc_yield_history(
         logging.info(f"Getting yield data for [{country_name}]")
 
         curve = {}
+        kwargs = {"from_date": from_date, "to_date": to_date}
         for ticker in tickers:
-            df = investpy.get_bond_historical_data(
-                ticker,
-                from_date=from_date,
-                to_date=to_date,
-            )
+            tries = 0
+            while tries < settings.MAX_RETRIES_ON_CONNECTION_ERROR:
+                try:
+                    df = investpy.get_bond_historical_data(ticker, **kwargs)
+                    break
+                except ConnectionError as e:
+                    logger.error(e)
+                    time.sleep(10)
+                tries += 1
+
             curve[ticker] = df
 
         return pd.concat(curve, axis=1)
