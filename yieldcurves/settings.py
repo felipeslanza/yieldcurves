@@ -12,8 +12,9 @@ import os
 # ----
 DATE_FORMAT = "%Y-%m-%d"
 
-LOGGING_LEVEL = os.environ.get("LOGGING_LEVEL", "INFO")
-LOGGING_FORMAT = "%(levelname)s - yieldcurves.%(module)s.%(funcName)s - %(message)s"
+# --------------------------------------------------------
+# Logging settings are defined at '.streamlit/config.toml'
+# --------------------------------------------------------
 
 
 # Investing data
