@@ -60,18 +60,18 @@ def get_recent_yield(
                 break
             except ConnectionError as e:
                 logger.error(e)
-                time.sleep(10)
+                sleep(10)
             tries += 1
         data[ticker] = df[field].rename(ticker)
 
-    df = pd.DataFrame(data)
-
-    return df.tail(n_rows).dropna(thresh=settings.MIN_VALID_CURVE_THRESHOLD)
+    if data:
+        df = pd.DataFrame(data)
+        return df.tail(n_rows).dropna(thresh=settings.MIN_VALID_CURVE_THRESHOLD)
 
 
 def get_ohlc_yield_history(
     country_name: str,
-    from_date: str = "01/01/1990",
+    from_date: str = "01/01/2020",
     to_date: str = TODAY_STR,
 ) -> Optional[pd.DataFrame]:
     """Returns historical OHLC yield data for all bonds issued by `country_name`
@@ -101,9 +101,10 @@ def get_ohlc_yield_history(
                     break
                 except ConnectionError as e:
                     logger.error(e)
-                    time.sleep(10)
+                    sleep(10)
                 tries += 1
 
             curve[ticker] = df
 
-        return pd.concat(curve, axis=1)
+        if curve:
+            return pd.concat(curve, axis=1)

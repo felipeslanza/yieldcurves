@@ -87,8 +87,8 @@ class Manager:
             # Required to ensure uniqueness on (date, cnpj) pair
             self.collection.create_index(
                 [
-                    ("date", pymongo.DESCENDING),
-                    ("fund_cnpj", pymongo.ASCENDING),
+                    ("country", pymongo.ASCENDING),
+                    ("bond", pymongo.ASCENDING),
                 ],
                 unique=True,
             )

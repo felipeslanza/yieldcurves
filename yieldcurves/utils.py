@@ -100,7 +100,7 @@ def search_country(query: str) -> List[str]:
         else:
             tickers = res.name.tolist()
 
-    return filter(_is_valid_ticker, tickers)
+    return list(filter(_is_valid_ticker, tickers))
 
 
 def sort_by_term(tickers: List[str]) -> List[str]:
