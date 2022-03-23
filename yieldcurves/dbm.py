@@ -6,6 +6,7 @@ Database manager to persist/cache requests to investpy
 """
 
 import logging
+import re
 from typing import Optional
 
 import pandas as pd
@@ -81,48 +82,59 @@ class Manager:
             self.collection = self.db[self.collection]
 
             # Required to speed up query
-            self.collection.create_index("date")
-            self.collection.create_index("fund_cnpj")
+            self.collection.create_index("country")
+            self.collection.create_index("bond")
+            self.collection.create_index("dates")
 
             # Required to ensure uniqueness on (date, cnpj) pair
             self.collection.create_index(
                 [
                     ("country", pymongo.ASCENDING),
                     ("bond", pymongo.ASCENDING),
+                    ("dates", pymongo.ASCENDING),
                 ],
                 unique=True,
             )
 
-    # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    # TODO: implement those
-    # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    def write_series(self, series: pd.Series, name: str = ""):
-        """Write a single time series with yield data to the database
+    def write_data(self, data: pd.DataFrame):
+        """Write multiple time series with yield data (as
+        returned from `investpy`) to the database
 
         ...
 
         Parameters
         ----------
-        series : pd.Series
+        data : pd.DataFrame
         """
-        assert series.size, "Empty `Series`"
+        data.rename(str.lower, axis=1, inplace=True)
+        bonds = data.columns.get_level_values(0)
+        country = re.sub(" ", "_", re.findall(r"([a-zA-Z\s]{2,}) ", bonds[0])[0])
+        for ticker, df in data.groupby(bonds, axis=1):
+            df = df[ticker]  # Drop level 0
+            ticker = re.sub(" ", "_", ticker)
+            db_obj = self.collection.find_one({"bond": ticker})
 
-        name = name or series.name
-        assert len(name.split("|")) == 2, "Incorrect name, must be 'TICKER|FIELD'"
+            # New data
+            if not db_obj:
+                new_obj = {
+                    "country": country,
+                    "bond": ticker,
+                    "dates": df.index.tolist(),
+                    **dict(zip(df.columns, df.T.values.tolist())),
+                }
+                logger.info(f"Inserting new {ticker} to DB")
+                self.collection.insert_one(new_obj)
 
-        raise NotImplementedError()
+            # Existing data, append each field
+            else:
+                try:
+                    last_date = db_obj["dates"][-1]
+                except IndexError:
+                    last_date = None
 
-    def write_df(self, df: pd.DataFrame):
-        """Write multiple time series with yield data to the database
-
-        ...
-
-        Parameters
-        ----------
-        df : pd.DataFrame
-        """
-        assert df.size, "Empty `DataFrame`"
-
-        raise NotImplementedError()
-
-    # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+                df = df.loc[last_date:]
+                new_obj = {"$push", {"dates": {"$each": df.index.tolist()}}}
+                for field, series in df.iteritems():
+                    new_obj["$push"][field] = {"$each": series.tolist()}
+                logger.info(f"Updating existing {ticker} in DB")
+                self.collection.updateOne({"bond": ticker}, new_obj)
