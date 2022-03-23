@@ -10,4 +10,4 @@ if __name__ == "__main__":
 
     # Run
     # ----
-    dbm.write_data(df)
+    # dbm.write_data(df)

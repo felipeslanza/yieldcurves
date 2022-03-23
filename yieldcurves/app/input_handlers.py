@@ -14,10 +14,7 @@ __all__ = (
 )
 
 
-def render_country_selector(
-    container: DeltaGenerator,
-    default: str = "Brazil",
-) -> str:
+def render_country_selector(container: DeltaGenerator, default: str = "Brazil") -> str:
     return container.text_input(
         label="Country (full name)",
         value=default,
@@ -25,7 +22,7 @@ def render_country_selector(
 
 
 def render_dates_selector(container: DeltaGenerator) -> List[str]:
-    container.subheader("Dates")
+    container.subheader("Dates (YYYY-MM-DD)")
 
     today = datetime.today().date()
     d0_val = today.strftime(settings.DATE_FORMAT)

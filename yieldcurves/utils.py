@@ -9,6 +9,7 @@ import pandas as pd
 
 
 __all__ = (
+    "flip_date_format",
     "get_terms",
     "get_tickvals",
     "interpolate_curve",
@@ -18,6 +19,12 @@ __all__ = (
 
 
 logger = logging.getLogger(__name__)
+
+
+def flip_date_format(date: str) -> str:
+    """Goes from YYYY/MM/DD to DD/MM/YYYY and vice-versa"""
+    a, m, b = date.replace("-", "/").split("/")
+    return f"{b}/{m}/{a}"
 
 
 def get_terms(tickers: List[str]) -> List[str]:

@@ -6,6 +6,7 @@ This module defines functions to get yield data.
 """
 
 import logging
+import re
 from datetime import datetime
 from time import sleep
 from typing import Optional
@@ -14,7 +15,8 @@ import pandas as pd
 import investpy
 
 from . import settings
-from .utils import search_country
+from .dbm import Manager
+from .utils import flip_date_format, search_country
 
 
 __all__ = (
@@ -73,6 +75,7 @@ def get_ohlc_yield_history(
     country_name: str,
     from_date: str = "01/01/2020",
     to_date: str = TODAY_STR,
+    manager: Optional[Manager] = None,
 ) -> Optional[pd.DataFrame]:
     """Returns historical OHLC yield data for all bonds issued by `country_name`
 
@@ -94,6 +97,20 @@ def get_ohlc_yield_history(
         curve = {}
         kwargs = {"from_date": from_date, "to_date": to_date}
         for ticker in tickers:
+            ticker = re.sub(" ", "_", ticker.lower())
+
+            # +++++++++++++++++++++++++++++++++++++++++++++++++++
+            # Try hitting local DB first (preliminary)
+            # +++++++++++++++++++++++++++++++++++++++++++++++++++
+            if manager:
+                df = manager.get_data(ticker, from_date, to_date)
+                df = df.loc[flip_date_format(from_date) : flip_date_format(to_date)]
+                if df.size:
+                    curve[ticker] = df
+                    continue
+            # +++++++++++++++++++++++++++++++++++++++++++++++++++
+
+            # Query `investpy` instead
             tries = 0
             while tries < settings.MAX_RETRIES_ON_CONNECTION_ERROR:
                 try:

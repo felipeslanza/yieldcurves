@@ -106,6 +106,8 @@ class Manager:
         ----------
         data : pd.DataFrame
         """
+        assert data.index.is_monotonic, "Data must already be sorted"
+
         data.rename(str.lower, axis=1, inplace=True)
         bonds = data.columns.get_level_values(0)
         country = re.sub(" ", "_", re.findall(r"([a-zA-Z\s]{2,}) ", bonds[0])[0])
