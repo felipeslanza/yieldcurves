@@ -7,7 +7,7 @@ Database manager to persist/cache requests to investpy
 
 import logging
 import re
-from typing import Optional
+from typing import Optional, Union
 
 import pandas as pd
 import pymongo
@@ -96,7 +96,39 @@ class Manager:
                 unique=True,
             )
 
-    def write_data(self, data: pd.DataFrame):
+    def find(
+        self,
+        ticker: str,
+        from_date: Optional[str] = None,
+        to_date: Optional[str] = None,
+    ) -> Optional[Union[pd.Series, pd.DataFrame]]:
+        """Query a ticker from the database
+
+        ....
+
+        Parameters
+        ----------
+        ticker : str
+        from_date : str
+            in YYYY-MM-DD format
+        to_date : str
+            in YYYY-MM-DD format
+        """
+        query = {"bond": ticker.lower()}
+        if from_date or to_date:
+            query["dates"] = {}
+            if from_date:
+                query["dates"]["$gte"] = pd.to_datetime(from_date)
+            if to_date:
+                query["dates"]["$lte"] = pd.to_datetime(to_date)
+
+        out = dict(_id=0, dates=1, close=1, open=1, high=1, low=1)
+        obj = list(self.collection.find(query, out))
+        if obj:
+            assert len(obj) == 1
+            return pd.DataFrame(obj[0]).set_index("dates")
+
+    def write(self, data: pd.DataFrame):
         """Write multiple time series with yield data (as
         returned from `investpy`) to the database
 
@@ -135,8 +167,8 @@ class Manager:
                     last_date = None
 
                 df = df.loc[last_date:]
-                new_obj = {"$push", {"dates": {"$each": df.index.tolist()}}}
+                new_obj = {"$push": {"dates": {"$each": df.index.tolist()}}}
                 for field, series in df.iteritems():
                     new_obj["$push"][field] = {"$each": series.tolist()}
                 logger.info(f"Updating existing {ticker} in DB")
-                self.collection.updateOne({"bond": ticker}, new_obj)
+                self.collection.update_one({"bond": ticker}, new_obj)

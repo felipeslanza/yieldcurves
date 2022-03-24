@@ -10,4 +10,5 @@ if __name__ == "__main__":
 
     # Run
     # ----
-    # dbm.write_data(df)
+    dbm.write(df)
+    bz1 = dbm.find("brazil_3m")
