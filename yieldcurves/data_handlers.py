@@ -14,7 +14,13 @@ import pandas as pd
 import investpy
 
 from . import settings
-from .dbm import Manager
+
+try:
+    import pymongo
+except ImportError:
+    Manager = None
+else:
+    from .dbm import Manager
 from .utils import flip_date_format, search_country
 
 
@@ -31,7 +37,7 @@ logger = logging.getLogger(__name__)
 # ----
 TODAY = datetime.today().date()
 TODAY_STR = TODAY.strftime("%d/%m/%Y")
-LOCAL_DB_MANAGER = Manager()
+LOCAL_DB_MANAGER = Manager() if Manager else None
 
 
 def get_recent_yield(

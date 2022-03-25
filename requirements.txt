@@ -1,4 +1,6 @@
 investpy
 pandas
+plotly
 pymongo[srv]
+scipy
 streamlit
