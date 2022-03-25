@@ -28,7 +28,10 @@ def run():
     target_country = render_country_selector(st.sidebar)
 
     # Setup & load data
-    load_country(target_country)  # cached
+    with st.spinner(text="Loading country data..."):
+        load_country(target_country)
+        if shared.bonds_df is None:
+            st.error("Invalid country. Please provide a valid country name.")
     st.sidebar.subheader("Active terms")
     load_active_bonds()
     shared.interpolation_method = render_interpolation_selector(st.sidebar)

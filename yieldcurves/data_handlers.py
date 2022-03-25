@@ -97,11 +97,13 @@ def _safely_get_ohlc_hist(
             sleep(10)
         tries += 1
 
-    if df is not None and manager is not None:
-        cols = df.columns
-        df.columns = pd.MultiIndex.from_product(((ticker,), cols))
-        manager.write(df)
-        df.columns = cols
+    if df is not None:
+        df.rename(str.lower, axis=1, inplace=True)
+        if manager is not None:
+            cols = df.columns
+            df.columns = pd.MultiIndex.from_product(((ticker,), cols))
+            manager.write(df)
+            df.columns = cols
 
     return df
 
