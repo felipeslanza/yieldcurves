@@ -7,7 +7,6 @@ This module defines data loaders to be used by the app.
 
 from contextlib import suppress
 
-import pandas as pd
 import streamlit as st
 
 from yieldcurves.data_handlers import get_ohlc_yield_history
@@ -24,7 +23,7 @@ def load_country(target_country: str):
         return
 
     df = get_ohlc_yield_history(target_country)
-    df = df.xs("Close", 1, 1)
+    df = df.xs("close", 1, 1)
     # df = pd.read_pickle(f"/home/fsl/code/yieldcurves/{target_country}.pkl")
 
     # Updated shared variables
@@ -37,12 +36,12 @@ def load_country(target_country: str):
 
 
 def load_active_bonds():
-    monthly_count = 0
+    # monthly_count = 0
     for term in shared.bonds_tickers:
-        if "M" in term:
-            monthly_count += 1
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         # TODO: unselect vertices when multiple monthly issuances are available
+        # if "m" in term:
+        #     monthly_count += 1
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
         val = st.sidebar.checkbox(term, value=True)

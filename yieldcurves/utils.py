@@ -29,7 +29,7 @@ def flip_date_format(date: str) -> str:
 
 def get_terms(tickers: List[str]) -> List[str]:
     """Map tickers to bond terms, e.g. Brazil 5Y -> 5Y"""
-    return re.findall(r"\d+[MY]", "|".join(tickers))
+    return re.findall(r"\d+[MYmy]", "|".join(tickers))
 
 
 def get_tickvals(terms: List[str]) -> List[int]:
@@ -46,9 +46,9 @@ def get_tickvals(terms: List[str]) -> List[int]:
 
     vals = [None] * len(terms)
     for i, term in enumerate(terms):
-        if "M" in term:
+        if "m" in term:
             val = int(term[:-1])
-        elif "Y" in term:
+        elif "y" in term:
             val = int(term[:-1]) * 12
         else:
             raise ValueError(f"Unrecognized period [{term}]")
@@ -124,7 +124,7 @@ def sort_by_term(tickers: List[str]) -> List[str]:
     def _custom_sorter(key: str) -> str:
         """Add higher prefix to years and sort as number (not alphabetically)"""
         number, period = key[:-1], key[-1]
-        suffix = {"Y": 10000, "M": 100, "W": 1}[period]
+        suffix = {"y": 10000, "m": 100, "w": 1}[period]
 
         return int(f"{suffix}{number}")
 

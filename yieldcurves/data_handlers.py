@@ -79,6 +79,9 @@ def _safely_get_ohlc_hist(
     manager: Manager,
 ) -> Optional[pd.DataFrame]:
     """Wrapper around `get_bond_historical_data` to handle connection errors"""
+    if from_date == to_date:
+        return
+
     df = None
     tries = 0
     while tries < settings.MAX_RETRIES_ON_CONNECTION_ERROR:
@@ -136,10 +139,10 @@ def get_ohlc_yield_history(
 
         # Try hitting local DB first (preliminary)
         if manager:
-            from_date_ = flip_date_format(from_date)  # investpy format
-            to_date_ = flip_date_format(to_date)  # investpy format
+            from_date_ = flip_date_format(from_date)  # DB format
+            to_date_ = flip_date_format(to_date)  # DB format
 
-            df = manager.find(db_ticker, from_date, to_date)
+            df = manager.find(db_ticker, from_date_, to_date_)
             if df is None:
                 df = pd.DataFrame()
 
@@ -147,19 +150,17 @@ def get_ohlc_yield_history(
             if df.size > 1:
                 # Fill missing data only
                 if df.index[0] > pd.to_datetime(from_date_):
-                    new_to_date = df.index[0] - pd.Timedelta("1D")
-                    new_to_date = new_to_date.strftime(settings.INVESTPY_DATE_FORMAT)
-                    df_pre = _safely_get_ohlc_hist(
-                        ticker, from_date, new_to_date, manager
-                    )
-                    df = pd.concat([df_pre, df], axis=1).sort_index()
+                    to_date2 = df.index[0] - pd.Timedelta("1D")
+                    to_date2 = to_date2.strftime(settings.INVESTPY_DATE_FORMAT)
+                    df_pre = _safely_get_ohlc_hist(ticker, from_date, to_date2, manager)
+                    if df_pre is not None:
+                        df = pd.concat([df_pre, df], axis=1).sort_index()
                 if df.index[-1] < pd.to_datetime(to_date_):
-                    new_from_date = df.index[-1] + pd.Timedelta("1D")
-                    new_from_date = new_from_date.strftime(settings.INVESTPY_DATE_FORMAT)
-                    df_post = _safely_get_ohlc_hist(
-                        ticker, new_from_date, to_date, manager
-                    )
-                    df = pd.concat([df_post, df], axis=1).sort_index()
+                    from_date2 = df.index[-1] + pd.Timedelta("1D")
+                    from_date2 = from_date2.strftime(settings.INVESTPY_DATE_FORMAT)
+                    df_post = _safely_get_ohlc_hist(ticker, from_date2, to_date, manager)
+                    if df_post is not None:
+                        df = pd.concat([df_post, df], axis=1).sort_index()
 
                 curve[db_ticker] = df
                 continue

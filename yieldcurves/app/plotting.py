@@ -51,7 +51,7 @@ def plot_yield_curve(
     data = shared.bonds_df.loc[active_dates, sorted_tickers].T
     data.index = tickvals
     data = data.reindex(np.arange(1, tickvals[-1] + 1))  # Reindex to longest mty
-    max_tick = tickvals[-1] + 12 if "Y" in shared.bonds_terms[-1] else 1
+    max_tick = tickvals[-1] + 12 if "y" in shared.bonds_terms[-1] else 1
 
     fig = go.Figure(
         layout=dict(
@@ -90,7 +90,7 @@ def plot_yield_curve(
         fig.add_trace(
             go.Scatter(
                 x=series.index,
-                y=series,
+                y=series.values,
                 mode="lines+markers",
                 name=date.strftime(settings.DATE_FORMAT),
                 marker=dict(color=color),
@@ -103,7 +103,7 @@ def plot_yield_curve(
             fig.add_trace(
                 go.Scatter(
                     x=curve.index,
-                    y=curve,
+                    y=curve.values,
                     line=dict(width=0.75, color=color),
                     showlegend=False,
                 )
