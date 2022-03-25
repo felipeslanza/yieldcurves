@@ -145,7 +145,7 @@ class Manager:
         country = re.sub(" ", "_", re.findall(r"([a-zA-Z\s]{2,}) ", bonds[0])[0])
         for ticker, df in data.groupby(bonds, axis=1):
             df = df[ticker]  # Drop level 0
-            ticker = re.sub(" ", "_", ticker)
+            ticker = ticker.replace(" ", "_")
             db_obj = self.collection.find_one({"bond": ticker})
 
             # New data

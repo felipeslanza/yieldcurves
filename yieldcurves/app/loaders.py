@@ -18,7 +18,7 @@ from . import shared
 __all__ = ("load_country",)
 
 
-@st.cache
+# @st.cache
 def load_country(target_country: str):
     if not target_country:
         return

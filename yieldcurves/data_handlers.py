@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
 # ----
 TODAY = datetime.today().date()
 TODAY_STR = TODAY.strftime("%d/%m/%Y")
+LOCAL_DB_MANAGER = Manager()
 
 
 def get_recent_yield(
@@ -55,6 +56,7 @@ def get_recent_yield(
 
     data = {}
     for ticker in tickers:
+        df = _safely_get_ohlc_hist(ticker)
         tries = 0
         while tries < settings.MAX_RETRIES_ON_CONNECTION_ERROR:
             try:
@@ -71,11 +73,35 @@ def get_recent_yield(
         return df.tail(n_rows).dropna(thresh=settings.MIN_VALID_CURVE_THRESHOLD)
 
 
+def _safely_get_ohlc_hist(
+    ticker: str,
+    from_date: str,
+    to_date: str,
+) -> Optional[pd.DataFrame]:
+    """Wrapper around `get_bond_historical_data` to handle connection errors"""
+    df = None
+    tries = 0
+    while tries < settings.MAX_RETRIES_ON_CONNECTION_ERROR:
+        try:
+            df = investpy.get_bond_historical_data(
+                ticker,
+                from_date=from_date,
+                to_date=to_date,
+            )
+            break
+        except ConnectionError as e:
+            logger.error(e)
+            sleep(10)
+        tries += 1
+
+    return df
+
+
 def get_ohlc_yield_history(
     country_name: str,
     from_date: str = "01/01/2020",
     to_date: str = TODAY_STR,
-    manager: Optional[Manager] = None,
+    manager: Optional[Manager] = LOCAL_DB_MANAGER,
 ) -> Optional[pd.DataFrame]:
     """Returns historical OHLC yield data for all bonds issued by `country_name`
 
@@ -89,39 +115,51 @@ def get_ohlc_yield_history(
     to_date : str
         end date in "DD/MM/YYYY" format
     """
+    logging.info(f"Getting yield data for [{country_name}]")
+
     tickers = search_country(country_name)
+    if not tickers:
+        return
 
-    if tickers:
-        logging.info(f"Getting yield data for [{country_name}]")
+    curve = {}
+    for ticker in tickers:
+        # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        # WARNING: ticker naming convention in DB is different than `investpy`'s
+        # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        db_ticker = ticker.lower().replace(" ", "_")
 
-        curve = {}
-        kwargs = {"from_date": from_date, "to_date": to_date}
-        for ticker in tickers:
-            ticker = re.sub(" ", "_", ticker.lower())
+        # Try hitting local DB first (preliminary)
+        if manager:
+            from_date_ = flip_date_format(from_date)  # investpy format
+            to_date_ = flip_date_format(to_date)  # investpy format
 
-            # +++++++++++++++++++++++++++++++++++++++++++++++++++
-            # Try hitting local DB first (preliminary)
-            # +++++++++++++++++++++++++++++++++++++++++++++++++++
-            if manager:
-                df = manager.get_data(ticker, from_date, to_date)
-                df = df.loc[flip_date_format(from_date) : flip_date_format(to_date)]
-                if df.size:
-                    curve[ticker] = df
-                    continue
-            # +++++++++++++++++++++++++++++++++++++++++++++++++++
+            df = manager.find(db_ticker, from_date, to_date)
+            if df is None:
+                df = pd.DataFrame()
 
-            # Query `investpy` instead
-            tries = 0
-            while tries < settings.MAX_RETRIES_ON_CONNECTION_ERROR:
-                try:
-                    df = investpy.get_bond_historical_data(ticker, **kwargs)
-                    break
-                except ConnectionError as e:
-                    logger.error(e)
-                    sleep(10)
-                tries += 1
+            df = df.loc[from_date_:to_date_]
+            if df.size > 1:
+                # Fill missing data only
+                if df.index[0] > pd.to_datetime(from_date_):
+                    new_to_date = df.index[0] - pd.Timedelta("1D")
+                    new_to_date = new_to_date.strftime(settings.INVESTPY_DATE_FORMAT)
+                    df_pre = _safely_get_ohlc_hist(ticker, from_date, new_to_date)
+                    df = pd.concat([df_pre, df], axis=1).sort_index()
+                if df.index[-1] < pd.to_datetime(to_date_):
+                    new_from_date = df.index[-1] + pd.Timedelta("1D")
+                    new_from_date = new_from_date.strftime(settings.INVESTPY_DATE_FORMAT)
+                    df_post = _safely_get_ohlc_hist(ticker, new_from_date, to_date)
+                    df = pd.concat([df_post, df], axis=1).sort_index()
 
+                curve[db_ticker] = df
+                continue
+
+        # Query `investpy` instead
+        df = _safely_get_ohlc_hist(ticker, from_date, to_date)
+        if df is not None:
             curve[ticker] = df
+            if manager:
+                manager.write(df)
 
-        if curve:
-            return pd.concat(curve, axis=1)
+    if curve:
+        return pd.concat(curve, axis=1)

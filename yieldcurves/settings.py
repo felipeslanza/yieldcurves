@@ -10,7 +10,8 @@ import os
 
 # General
 # ----
-DATE_FORMAT = "%Y-%m-%d"
+DATE_FORMAT = "%Y/%m/%d"  # pandas-like, same as in local DB
+INVESTPY_DATE_FORMAT = "%d/%m/%Y"
 
 # --------------------------------------------------------
 # Logging settings are defined at '.streamlit/config.toml'
