@@ -30,13 +30,13 @@ def run():
     # Setup & load data
     with st.spinner(text="Loading country data..."):
         load_country(target_country)
-        if shared.bonds_df is None:
+        if not shared.bonds_tickers:
             st.error("Invalid country. Please provide a valid country name.")
     st.sidebar.subheader("Active terms")
     load_active_bonds()
-    shared.interpolation_method = render_interpolation_selector(st.sidebar)
+    if shared.bonds_tickers:
+        shared.interpolation_method = render_interpolation_selector(st.sidebar)
 
-    if shared.target_country:
         # Layout (post-data)
         cont0.title(f"Bond yields: *{shared.target_country.title()}*")
         left0, right0 = cont0.columns([0.8, 0.2])

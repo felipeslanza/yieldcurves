@@ -33,6 +33,10 @@ def render_dates_selector(container: DeltaGenerator) -> List[str]:
     d1 = container.text_input("#2: ", value=d1_val)
     d2 = container.text_input("#3: ", value=d2_val)
 
+    # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    # TODO: add handler to trigger `get_ohlc_yield_history` for unseen dates
+    # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
     return [d0, d1, d2]
 
 

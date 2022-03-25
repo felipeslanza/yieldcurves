@@ -143,7 +143,7 @@ class Manager:
 
         data.rename(str.lower, axis=1, inplace=True)
         bonds = data.columns.get_level_values(0)
-        country = re.sub(" ", "_", re.findall(r"([a-zA-Z\s]{2,}) ", bonds[0])[0])
+        country = re.sub(" ", "_", re.findall(r"([a-zA-Z.\s]{2,}) ", bonds[0])[0])
         for ticker, df in data.groupby(bonds, axis=1):
             df = df[ticker]  # Drop level 0
             ticker = ticker.replace(" ", "_")

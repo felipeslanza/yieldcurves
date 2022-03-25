@@ -92,6 +92,10 @@ def _safely_get_ohlc_hist(
                 to_date=to_date,
             )
             break
+        except IndexError as e:
+            # No bond information found for the target period at `investpy`
+            logger.error(e)
+            break
         except ConnectionError as e:
             logger.error(e)
             sleep(10)
@@ -156,13 +160,13 @@ def get_ohlc_yield_history(
                     to_date2 = to_date2.strftime(settings.INVESTPY_DATE_FORMAT)
                     df_pre = _safely_get_ohlc_hist(ticker, from_date, to_date2, manager)
                     if df_pre is not None:
-                        df = pd.concat([df_pre, df], axis=1).sort_index()
+                        df = pd.concat([df_pre, df], axis=0).sort_index()
                 if df.index[-1] < pd.to_datetime(to_date_):
                     from_date2 = df.index[-1] + pd.Timedelta("1D")
                     from_date2 = from_date2.strftime(settings.INVESTPY_DATE_FORMAT)
                     df_post = _safely_get_ohlc_hist(ticker, from_date2, to_date, manager)
                     if df_post is not None:
-                        df = pd.concat([df_post, df], axis=1).sort_index()
+                        df = pd.concat([df_post, df], axis=0).sort_index()
 
                 curve[db_ticker] = df
                 continue
@@ -170,7 +174,7 @@ def get_ohlc_yield_history(
         # Query `investpy` instead
         df = _safely_get_ohlc_hist(ticker, from_date, to_date, manager)
         if df is not None:
-            curve[ticker] = df
+            curve[db_ticker] = df
 
     if curve:
         return pd.concat(curve, axis=1)
