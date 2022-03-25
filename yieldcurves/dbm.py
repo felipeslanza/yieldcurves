@@ -12,6 +12,8 @@ from typing import Optional, Union
 import pandas as pd
 import pymongo
 
+from .utils import flip_date_format
+
 
 __all__ = ("Manager",)
 
@@ -118,9 +120,9 @@ class Manager:
         if from_date or to_date:
             query["dates"] = {}
             if from_date:
-                query["dates"]["$gte"] = pd.to_datetime(from_date)
+                query["dates"]["$gte"] = pd.to_datetime(flip_date_format(from_date))
             if to_date:
-                query["dates"]["$lte"] = pd.to_datetime(to_date)
+                query["dates"]["$lte"] = pd.to_datetime(flip_date_format(to_date))
 
         out = dict(_id=0, dates=1, close=1, open=1, high=1, low=1)
         obj = list(self.collection.find(query, out))
@@ -139,6 +141,7 @@ class Manager:
         data : pd.DataFrame
         """
         assert data.index.is_monotonic, "Data must already be sorted"
+        assert data.columns.nlevels > 1, "Columns must be MultiIndex"
 
         data.rename(str.lower, axis=1, inplace=True)
         bonds = data.columns.get_level_values(0)

@@ -6,7 +6,6 @@ This module defines functions to get yield data.
 """
 
 import logging
-import re
 from datetime import datetime
 from time import sleep
 from typing import Optional
@@ -77,6 +76,7 @@ def _safely_get_ohlc_hist(
     ticker: str,
     from_date: str,
     to_date: str,
+    manager: Manager,
 ) -> Optional[pd.DataFrame]:
     """Wrapper around `get_bond_historical_data` to handle connection errors"""
     df = None
@@ -93,6 +93,12 @@ def _safely_get_ohlc_hist(
             logger.error(e)
             sleep(10)
         tries += 1
+
+    if df is not None and manager is not None:
+        cols = df.columns
+        df.columns = pd.MultiIndex.from_product(((ticker,), cols))
+        manager.write(df)
+        df.columns = cols
 
     return df
 
@@ -143,23 +149,25 @@ def get_ohlc_yield_history(
                 if df.index[0] > pd.to_datetime(from_date_):
                     new_to_date = df.index[0] - pd.Timedelta("1D")
                     new_to_date = new_to_date.strftime(settings.INVESTPY_DATE_FORMAT)
-                    df_pre = _safely_get_ohlc_hist(ticker, from_date, new_to_date)
+                    df_pre = _safely_get_ohlc_hist(
+                        ticker, from_date, new_to_date, manager
+                    )
                     df = pd.concat([df_pre, df], axis=1).sort_index()
                 if df.index[-1] < pd.to_datetime(to_date_):
                     new_from_date = df.index[-1] + pd.Timedelta("1D")
                     new_from_date = new_from_date.strftime(settings.INVESTPY_DATE_FORMAT)
-                    df_post = _safely_get_ohlc_hist(ticker, new_from_date, to_date)
+                    df_post = _safely_get_ohlc_hist(
+                        ticker, new_from_date, to_date, manager
+                    )
                     df = pd.concat([df_post, df], axis=1).sort_index()
 
                 curve[db_ticker] = df
                 continue
 
         # Query `investpy` instead
-        df = _safely_get_ohlc_hist(ticker, from_date, to_date)
+        df = _safely_get_ohlc_hist(ticker, from_date, to_date, manager)
         if df is not None:
             curve[ticker] = df
-            if manager:
-                manager.write(df)
 
     if curve:
         return pd.concat(curve, axis=1)
